@@ -1,0 +1,13 @@
+version: "3"
+
+services:
+  db:
+    image: postgres:14.5-alpine
+    environment:
+      POSTGRES_USER: money-processing
+      POSTGRES_PASSWORD: money-processing
+      POSTGRES_DB: money-processing
+    ports:
+      - "5432:5432"
+    expose:
+      - 5432
