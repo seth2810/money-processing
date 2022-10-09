@@ -6,25 +6,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
-
-	"github.com/gorilla/mux"
 )
 
-func Start(ctx context.Context, address string) error {
-	r := mux.NewRouter()
-
-	srv := &http.Server{
-		Addr:         address,
-		WriteTimeout: time.Second * 15,
-		ReadTimeout:  time.Second * 15,
-		IdleTimeout:  time.Second * 60,
-		Handler:      r,
-	}
-
+func Start(ctx context.Context, srv *http.Server) error {
 	errCh := make(chan error, 1)
 
-	log.Printf("server is starting on %s...", address)
+	log.Printf("server is starting on %s...", srv.Addr)
 
 	// Run our server in a goroutine so that it doesn't block.
 	go func() {

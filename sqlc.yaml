@@ -1,0 +1,25 @@
+version: "2"
+
+sql:
+  - schema: "migrations"
+    queries: "queries"
+    engine: "postgresql"
+    gen:
+      go:
+        package: "queries"
+        out: "internal/storage/queries"
+        emit_result_struct_pointers: true
+        emit_json_tags: true
+        emit_db_tags: true
+        overrides:
+          - db_type: "pg_catalog.numeric"
+            go_type:
+              import: "github.com/shopspring/decimal"
+              package: "decimal"
+              type: "Decimal"
+          - db_type: "pg_catalog.int4"
+            go_type:
+              import: "github.com/seth2810/money-processing/internal/storage/types"
+              package: "types"
+              type: "NullInt32"
+            nullable: true
