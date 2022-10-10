@@ -6,13 +6,15 @@ import (
 	"net/http"
 	"strconv"
 
+	v "github.com/gobuffalo/validate"
 	"github.com/gorilla/mux"
 	"github.com/seth2810/money-processing/internal/storage"
 	"github.com/seth2810/money-processing/internal/storage/queries"
 )
 
 var (
-	errTransactionTypeNotSupported = errors.New("transaction type not supported")
+	errSourceAccountNotFound       = errors.New("source account not found")
+	errDestinationAccountNotFound  = errors.New("destination account not found")
 	errTransferDifferentCurrencies = errors.New("transfer between accounts with different currencies not supported")
 )
 
@@ -28,8 +30,8 @@ func (h *handler) CreateClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := validateBody(&body); err != nil {
-		replyWithError(w, http.StatusBadRequest, err)
+	if errs := v.Validate(&body); errs.HasAny() {
+		replyWithJSON(w, http.StatusBadRequest, errs)
 		return
 	}
 
@@ -50,8 +52,8 @@ func (h *handler) CreateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := validateBody(&body); err != nil {
-		replyWithError(w, http.StatusBadRequest, err)
+	if errs := v.Validate(&body); errs.HasAny() {
+		replyWithJSON(w, http.StatusBadRequest, errs)
 		return
 	}
 
@@ -147,8 +149,8 @@ func (h *handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := validateBody(&body); err != nil {
-		replyWithError(w, http.StatusBadRequest, err)
+	if errs := v.Validate(&body); errs.HasAny() {
+		replyWithJSON(w, http.StatusBadRequest, errs)
 		return
 	}
 
@@ -159,16 +161,13 @@ func (h *handler) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 		h.withdraw(r.Context(), &body, w)
 	case queries.TransactionTypeTransfer:
 		h.transfer(r.Context(), &body, w)
-	default:
-		replyWithError(w, http.StatusBadRequest, errTransactionTypeNotSupported)
-		return
 	}
 }
 
 func (h *handler) deposit(ctx context.Context, body *CreateTransactionRequest, w http.ResponseWriter) {
 	toAccount, err := h.storage.GetAccount(ctx, body.ToAccountID)
 	if errors.Is(err, storage.ErrClientNotFound) {
-		replyWithError(w, http.StatusNotFound, err)
+		replyWithError(w, http.StatusNotFound, errDestinationAccountNotFound)
 		return
 	}
 
@@ -189,7 +188,7 @@ func (h *handler) deposit(ctx context.Context, body *CreateTransactionRequest, w
 func (h *handler) withdraw(ctx context.Context, body *CreateTransactionRequest, w http.ResponseWriter) {
 	fromAccount, err := h.storage.GetAccount(ctx, body.FromAccountID)
 	if errors.Is(err, storage.ErrClientNotFound) {
-		replyWithError(w, http.StatusNotFound, err)
+		replyWithError(w, http.StatusNotFound, errSourceAccountNotFound)
 		return
 	}
 
@@ -210,7 +209,7 @@ func (h *handler) withdraw(ctx context.Context, body *CreateTransactionRequest, 
 func (h *handler) transfer(ctx context.Context, body *CreateTransactionRequest, w http.ResponseWriter) {
 	fromAccount, err := h.storage.GetAccount(ctx, body.FromAccountID)
 	if errors.Is(err, storage.ErrClientNotFound) {
-		replyWithError(w, http.StatusNotFound, err)
+		replyWithError(w, http.StatusNotFound, errSourceAccountNotFound)
 		return
 	}
 
@@ -221,7 +220,7 @@ func (h *handler) transfer(ctx context.Context, body *CreateTransactionRequest, 
 
 	toAccount, err := h.storage.GetAccount(ctx, body.ToAccountID)
 	if errors.Is(err, storage.ErrClientNotFound) {
-		replyWithError(w, http.StatusNotFound, err)
+		replyWithError(w, http.StatusNotFound, errDestinationAccountNotFound)
 		return
 	}
 

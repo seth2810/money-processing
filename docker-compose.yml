@@ -12,10 +12,8 @@ services:
     expose:
       - 5432
 
-  money_processing:
-    build:
-      context: .
-      dockerfile: .docker/Dockerfile
+  server:
+    image: seth2810/money_processing:develop
     environment:
       HOST: 0.0.0.0
       PORT: 8080
@@ -24,6 +22,7 @@ services:
       DB_USER: money-processing
       DB_PASSWORD: money-processing
       DB_NAME: money-processing
+    platform: linux/amd64
     depends_on:
       - db
     ports:

@@ -19,10 +19,10 @@ import (
 	"github.com/seth2810/money-processing/internal/storage"
 )
 
-func initDB(ctx context.Context, cfg *config.Config) (*sql.DB, error) {
+func initDB(ctx context.Context, cfg *config.DatabaseConfig) (*sql.DB, error) {
 	dbDSN := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		cfg.Database.Host, cfg.Database.Port, cfg.Database.User, cfg.Database.Password, cfg.Database.Name,
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name,
 	)
 
 	db, err := goose.OpenDBWithDriver("postgres", dbDSN)
@@ -47,7 +47,7 @@ func serve(ctx context.Context) error {
 		return fmt.Errorf("failed to read config: %w", err)
 	}
 
-	db, err := initDB(ctx, cfg)
+	db, err := initDB(ctx, &cfg.Database)
 	if err != nil {
 		return fmt.Errorf("failed to init DB: %w", err)
 	}
